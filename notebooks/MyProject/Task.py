@@ -710,3 +710,7 @@ else:
 # COMMAND ----------
 
 "hello"
+
+# COMMAND ----------
+
+"hello hi"
