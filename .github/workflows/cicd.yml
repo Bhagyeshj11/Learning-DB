@@ -4,7 +4,6 @@ on:
   push:
     branches: 
       - main
-      # - fractal-develop
 
 jobs:
   build-and-deploy:
