@@ -1,0 +1,51 @@
+name: Upload Files to Databricks Workspace
+
+on: 
+  push:
+    branches: 
+      - main
+      # - fractal-develop
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: dev
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Variables Used in Workflow
+      run: |
+        echo "Databricks Host: ${{ vars.DATABRICKS_HOST }}"
+        echo "Remote Save Location: ${{ vars.REMOTE_FILE_PATH }}"
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+      
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Azure CLI script
+      uses: azure/cli@v2
+      with:
+        azcliversion: 2.58.0
+        inlineScript: |
+          echo "Azure CLI VERSION"
+          az --version
+
+    - name: Installing Databricks CLI
+      run: |
+        chmod +x ${{ github.workspace }}/db_cli_install.sh
+        ${{ github.workspace }}/db_cli_install.sh
+      shell: bash
+
+    - name: Import Code to Databricks
+      run: |
+        rsync -av --exclude={.git,.github,README.md,.gitignore} "${{ github.workspace }}/" "${{ env.LOCAL_FILE_PATH }}"
+        databricks workspace import-dir --overwrite "${{ env.LOCAL_FILE_PATH }}" "${{ env.REMOTE_FILE_PATH }}" --debug
+      env:
+        DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DB_TOKEN }}
+        LOCAL_FILE_PATH: "/tmp/temp_databricks/"
+        REMOTE_FILE_PATH: ${{ vars.REMOTE_FILE_PATH }}
